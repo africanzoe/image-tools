@@ -16,9 +16,9 @@ def compute_images = []
 def image_version = [:]
 def removable_tags = []
 
-env.SSH_KEY_FILE = "${env.HOME}/.ssh/id_worker"
-env.IMAGE_DIR_BASE = "${env.WORKSPACE}/image"
-env.EXPORT_DIR_BASE = "${env.WORKSPACE}/export"
+env.SSH_KEY_FILE = "${HOME}/.ssh/id_worker"
+env.IMAGE_DIR_BASE = "${WORKSPACE}/image"
+env.EXPORT_DIR_BASE = "${WORKSPACE}/export"
 
 node {
   stage('Pull image source') {
