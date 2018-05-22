@@ -16,10 +16,6 @@ def compute_images = []
 def image_version = [:]
 def removable_tags = []
 
-env.SSH_KEY_FILE = "${HOME}/.ssh/id_worker"
-env.IMAGE_DIR_BASE = "${WORKSPACE}/image"
-env.EXPORT_DIR_BASE = "${WORKSPACE}/export"
-
 node {
   stage('Pull image source') {
     dir('image') {
@@ -33,10 +29,9 @@ node {
     }
   }
   stage('Set environment') {
-    manifest = readFile("${env.IMAGE_DIR_BASE}/manifest.json")
+    manifest = readFile("${env.WORKSPACE}/image/manifest.json")
     manifest_data = new groovy.json.JsonSlurperClassic().parseText(manifest)
     image_version = manifest_data['images'][env.IMAGE_VERSION]
-    env.IMAGE_DIR = env.IMAGE_DIR_BASE + '/' + image_version['directory']
     env.MARKETPLACE_IMAGE_NAME = image_version['marketplace-name']
     env.IMAGE_DISK_SIZE = "50G"
     if (image_version.containsKey('options')) {
@@ -58,9 +53,11 @@ for (String arch in image_version['architectures']) {
         sh 'scw login -o "$SCW_ORGANIZATION" -t "$SCW_TOKEN" -s >/dev/null 2>&1'
       }
       echo "Creating image for $arch"
-      sh "make ARCH=$arch IMAGE_DIR=${env.IMAGE_DIR} EXPORT_DIR=${env.EXPORT_DIR_BASE}/$arch BUILD_OPTS='${env.BUILD_OPTS}' scaleway_image"
-      imageId = readFile("${env.EXPORT_DIR_BASE}/$arch/image_id").trim()
-      docker_tags = readFile("${env.EXPORT_DIR_BASE}/$arch/docker_tags").trim().split('\n')
+      withEnv(["SSH_KEY_FILE=${env.HOME}/.ssh/id_worker"]) {
+        sh "make ARCH=$arch IMAGE_DIR=${env.WORKSPACE}/image/${image_version['directory']} EXPORT_DIR=${env.WORKSPACE}/export/$arch BUILD_OPTS='${env.BUILD_OPTS}' scaleway_image"
+      }
+      imageId = readFile("${env.WORKSPACE}/export/$arch/image_id").trim()
+      docker_tags = readFile("${env.WORKSPACE}/export/$arch/docker_tags").trim().split('\n')
       docker_image = docker_tags[0].split(':')[0]
       compute_images.add([
         arch: arch,
@@ -83,7 +80,9 @@ node {
     stage('Test the images') {
       try {
         for (Map image : compute_images) {
-          sh "make tests IMAGE_DIR=${env.IMAGE_DIR} EXPORT_DIR=${env.EXPORT_DIR_BASE}/${image['arch']} ARCH=${image['arch']} IMAGE_ID=${image['id']} TESTS_DIR=${env.IMAGE_DIR}/tests NO_CLEANUP=${params.needAdminApproval}"
+          withEnv(["IMAGE_DIR=${env.WORKSPACE}/image/${image_version['directory']}"]) {
+            sh "make tests IMAGE_DIR=${env.IMAGE_DIR} EXPORT_DIR=${env.WORKSPACE}/export/${image['arch']} ARCH=${image['arch']} IMAGE_ID=${image['id']} TESTS_DIR=${env.IMAGE_DIR}/tests NO_CLEANUP=${params.needAdminApproval}"
+          }
         }
         if (env.needsAdminApproval) {
           input "Confirm that the images are stable ?"
@@ -92,7 +91,7 @@ node {
       finally {
         if (env.needsAdminApproval) {
           for (Map image : compute_images) {
-            sh "scripts/test_images.sh stop ${env.EXPORT_DIR_BASE}/${image['arch']}/${image['id']}.servers"
+            sh "scripts/test_images.sh stop ${env.WORKSPACE}/export/${image['arch']}/${image['id']}.servers"
           }
         }
       }
