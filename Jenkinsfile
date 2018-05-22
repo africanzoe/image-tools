@@ -49,6 +49,7 @@ def image_builders = [:]
 for (String arch in image_version['architectures']) {
   image_builders[arch] = stage("Create image for ${arch} on Scaleway") {
     node("${arch}&&docker") {
+      unstash 'image-source'
       withCredentials([usernamePassword(credentialsId: 'scw-test-orga-token', usernameVariable: 'SCW_ORGANIZATION', passwordVariable: 'SCW_TOKEN')]) {
         sh 'scw login -o "$SCW_ORGANIZATION" -t "$SCW_TOKEN" -s >/dev/null 2>&1'
       }
