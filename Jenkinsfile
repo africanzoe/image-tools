@@ -18,6 +18,7 @@ def removable_tags = []
 
 node {
   stage('Pull image source') {
+    checkout scm
     dir('image') {
       deleteDir()
       checkout([
