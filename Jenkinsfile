@@ -57,17 +57,17 @@ for (String arch in image_version['architectures']) {
       }
       echo "Creating image for $arch"
       withEnv(["SSH_KEY_FILE=${env.HOME}/.ssh/id_worker"]) {
-        sh "make ARCH=$arch IMAGE_DIR=${env.WORKSPACE}/image/${image_version['directory']} EXPORT_DIR=${env.WORKSPACE}/export/$arch BUILD_OPTS='${env.BUILD_OPTS}' scaleway_image"
+        sh "make ARCH=${arch} IMAGE_DIR=${env.WORKSPACE}/image/${image_version['directory']} EXPORT_DIR=${env.WORKSPACE}/export/$arch BUILD_OPTS='${env.BUILD_OPTS}' scaleway_image"
       }
-      imageId = readFile("${env.WORKSPACE}/export/$arch/image_id").trim()
-      docker_tags = readFile("${env.WORKSPACE}/export/$arch/docker_tags").trim().split('\n')
+      imageId = readFile("${env.WORKSPACE}/export/${arch}/image_id").trim()
+      docker_tags = readFile("${env.WORKSPACE}/export/${arch}/docker_tags").trim().split('\n')
       docker_image = docker_tags[0].split(':')[0]
       compute_images.add([
         arch: arch,
         id: imageId,
         docker_tags: docker_tags
       ])
-      dir(env.EXPORT_DIR_BASE/arch) {
+      dir("${env.WORKSPACE}/export/${arch}") {
         sh "docker save -o docker-export-${arch}.tar ${docker_image}"
         stash "docker-export-${arch}"
         sh "docker rm ${docker_tags[-1]} && docker system prune -f"
