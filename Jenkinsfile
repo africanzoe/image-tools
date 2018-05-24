@@ -17,15 +17,9 @@ def image_version = [:]
 
 node {
   stage('Pull image source') {
-    checkout scm
     dir('image') {
       deleteDir()
-      checkout([
-        $class: 'GitSCM',
-        poll: false,
-        branches: [[name: env.IMAGE_GIT_BRANCH ?: 'master' ]],
-        userRemoteConfigs: [[url: env.IMAGE_GIT_SOURCE]]
-      ])
+      checkout scm
     }
   }
   stage('Set environment') {
