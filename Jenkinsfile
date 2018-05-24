@@ -24,6 +24,7 @@ return {
       }
     }
     stage('Set environment') {
+      env.IMAGE_VERSION = env.JOB_NAME.split('-').drop(2).join('-')
       manifest = readFile("${env.WORKSPACE}/image/manifest.json")
       manifest_data = new groovy.json.JsonSlurperClassic().parseText(manifest)
       image_version = manifest_data['images'][env.IMAGE_VERSION]
