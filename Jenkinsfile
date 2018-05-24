@@ -48,29 +48,30 @@ return {
 
   def image_builders = [:]
   for (String arch in image_version['architectures']) {
-    image_builders[arch] = {
-      stage("Create image for ${arch} on Scaleway") {
-        node("${arch}&&docker") {
+    def tmp_arch = arch
+    image_builders[tmp_arch] = {
+      stage("Create image for ${tmp_arch} on Scaleway") {
+        node("${tmp_arch}&&docker") {
           unstash 'image-source'
           sh 'tree'
           withCredentials([usernamePassword(credentialsId: 'scw-test-orga-token', usernameVariable: 'SCW_ORGANIZATION', passwordVariable: 'SCW_TOKEN')]) {
             sh 'scw login -o "$SCW_ORGANIZATION" -t "$SCW_TOKEN" -s >/dev/null 2>&1'
           }
-          echo "Creating image for $arch"
+          echo "Creating image for $tmp_arch"
           withEnv(["SSH_KEY_FILE=${env.HOME}/.ssh/id_worker"]) {
-            sh "make ARCH=${arch} IMAGE_DIR=${env.WORKSPACE}/image/${image_version['directory']} EXPORT_DIR=${env.WORKSPACE}/export/$arch BUILD_OPTS='${env.BUILD_OPTS}' scaleway_image"
+            sh "make ARCH=${tmp_arch} IMAGE_DIR=${env.WORKSPACE}/image/${image_version['directory']} EXPORT_DIR=${env.WORKSPACE}/export/$tmp_arch BUILD_OPTS='${env.BUILD_OPTS}' scaleway_image"
           }
-          imageId = readFile("${env.WORKSPACE}/export/${arch}/image_id").trim()
-          docker_tags = readFile("${env.WORKSPACE}/export/${arch}/docker_tags").trim().split('\n')
+          imageId = readFile("${env.WORKSPACE}/export/${tmp_arch}/image_id").trim()
+          docker_tags = readFile("${env.WORKSPACE}/export/${tmp_arch}/docker_tags").trim().split('\n')
           docker_image = docker_tags[0].split(':')[0]
           compute_images.add([
-            arch: arch,
+            tmp_arch: tmp_arch,
             id: imageId,
             docker_tags: docker_tags
           ])
-          dir("${env.WORKSPACE}/export/${arch}") {
-            sh "docker save -o docker-export-${arch}.tar ${docker_image}"
-            stash "docker-export-${arch}"
+          dir("${env.WORKSPACE}/export/${tmp_arch}") {
+            sh "docker save -o docker-export-${tmp_arch}.tar ${docker_image}"
+            stash "docker-export-${tmp_arch}"
             sh "docker image rm ${docker_tags[-1]} && docker system prune -f"
             deleteDir()
           }
