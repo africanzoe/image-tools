@@ -14,7 +14,6 @@ properties([
 
 def compute_images = []
 def image_version = [:]
-def removable_tags = []
 
 node {
   stage('Pull image source') {
@@ -70,7 +69,7 @@ for (String arch in image_version['architectures']) {
       dir("${env.WORKSPACE}/export/${arch}") {
         sh "docker save -o docker-export-${arch}.tar ${docker_image}"
         stash "docker-export-${arch}"
-        sh "docker rm ${docker_tags[-1]} && docker system prune -f"
+        sh "docker image rm ${docker_tags[-1]} && docker system prune -f"
         deleteDir()
       }
     }
