@@ -84,7 +84,7 @@ node {
     stage('Test the images') {
       try {
         for (Map image : compute_images) {
-          withEnv(["IMAGE_DIR=${env.WORKSPACE}/image/${image_version['directory']}"]) {
+          withEnv(["SSH_KEY_FILE=${env.HOME}/.ssh/id_worker", "IMAGE_DIR=${env.WORKSPACE}/image/${image_version['directory']}"]) {
             sh "make tests IMAGE_DIR=${env.IMAGE_DIR} EXPORT_DIR=${env.WORKSPACE}/export/${image['arch']} ARCH=${image['arch']} IMAGE_ID=${image['id']} TESTS_DIR=${env.IMAGE_DIR}/tests NO_CLEANUP=${params.needAdminApproval}"
           }
         }
@@ -95,7 +95,9 @@ node {
       finally {
         if (env.needsAdminApproval) {
           for (Map image : compute_images) {
-            sh "scripts/test_images.sh stop ${env.WORKSPACE}/export/${image['arch']}/${image['id']}.servers"
+            withEnv(["SSH_KEY_FILE=${env.HOME}/.ssh/id_worker"]) {
+              sh "scripts/test_images.sh stop ${env.WORKSPACE}/export/${image['arch']}/${image['id']}.servers"
+            }
           }
         }
       }
