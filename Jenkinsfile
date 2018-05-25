@@ -65,7 +65,7 @@ return {
           docker_tags = readFile("${env.WORKSPACE}/export/${tmp_arch}/docker_tags").trim().split('\n')
           docker_image = docker_tags[0].split(':')[0]
           compute_images.add([
-            tmp_arch: tmp_arch,
+            arch: tmp_arch,
             id: imageId,
             docker_tags: docker_tags
           ])
