@@ -61,9 +61,9 @@ return {
           withEnv(["SSH_KEY_FILE=${env.HOME}/.ssh/id_worker"]) {
             sh "make ARCH=${tmp_arch} IMAGE_DIR=${env.WORKSPACE}/image/${image_version['directory']} EXPORT_DIR=${env.WORKSPACE}/export/$tmp_arch BUILD_OPTS='${env.BUILD_OPTS}' scaleway_image"
           }
-          imageId = readFile("${env.WORKSPACE}/export/${tmp_arch}/image_id").trim()
-          docker_tags = readFile("${env.WORKSPACE}/export/${tmp_arch}/docker_tags").trim().split('\n')
-          docker_image = docker_tags[0].split(':')[0]
+          def imageId = readFile("${env.WORKSPACE}/export/${tmp_arch}/image_id").trim()
+          def docker_tags = readFile("${env.WORKSPACE}/export/${tmp_arch}/docker_tags").trim().split('\n')
+          def docker_image = docker_tags[0].split(':')[0]
           compute_images.add([
             arch: tmp_arch,
             id: imageId,
