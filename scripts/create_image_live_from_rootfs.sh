@@ -1,6 +1,5 @@
 #! /bin/bash
 
-# small changes to check the webhook
 SRC_DIR=$(dirname $(readlink -f $0))
 source $SRC_DIR/scw.sh
 source $SRC_DIR/setup_credentials.sh
