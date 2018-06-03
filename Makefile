@@ -1,5 +1,4 @@
 # Environment checkup
-# test
 ifndef IMAGE_DIR
 $(error "No image directory specified (IMAGE_DIR)")
 endif
